@@ -156,4 +156,22 @@
 - **Trade-offs:** Hub rebuilds all squads on every build (acceptable for <10 squads). Session store is shared across all squads (same DB path).
 - **Files:** Created `src/config-reader.js`. Modified `src/data-reader.js`, `src/html-generator.js`, `scripts/build.js`, `scripts/serve.js`.
 
+### D-009: CLI Packaging — npx-runnable tool
+- **By:** Vader (implementation), Jonathan Warnken (request)
+- **Date:** 2026-03-22
+- **Context:** Squad Monitor needed to be installable and runnable from any directory via npx. Requested by Jonathan Warnken.
+- **Decision:** Package as npx-runnable CLI tool. Created `bin/squad-monitor.js` entry point with simple hand-written command parser (no external CLI deps). Supports `squad-monitor build` and `squad-monitor dev` commands with `--squad-root`, `--db`, `--port` options.
+- **Implementation:**
+  - Created `bin/squad-monitor.js` — CLI entry point with shebang, version/help flags, command routing
+  - Refactored `scripts/build.js` → exports `build(options)` function, self-executes when run directly
+  - Refactored `scripts/serve.js` → exports `serve(options)` function, self-executes when run directly
+  - Updated `package.json` — added `bin`, `files`, `repository`, `homepage` fields
+  - Output directory defaults to `{squadRoot}/dist/` when run via npx from arbitrary directory
+- **Trade-offs:**
+  - Hand-written CLI parser vs. yargs/commander — keeps dependencies minimal (~4 deps total)
+  - Full page header on every command vs. silent output — better UX, clearer what's happening
+- **Backward compatible:** `npm run build` and `npm run dev` work exactly as before
+- **Error handling:** Graceful error with helpful message when `.squad/` directory not found
+- **Commit:** f8fcb86
+
 
