@@ -185,4 +185,17 @@
 - **Build verified:** Output at `.squad-monitor/index.html` (392 KB)
 - **Commit:** 286fe1c
 
+### D-011: Add `--host` flag for LAN/DAKboard access
+- **By:** Vader (implementation), Jonathan Warnken (request)
+- **Date:** 2026-03-22
+- **Status:** IMPLEMENTED
+- **Context:** Squad Monitor's dev server was hardcoded to `localhost`, making it inaccessible from other devices on the LAN. Jonathan Warnken needs the dashboard visible on DAKboard / kiosk wall displays connected to the same network.
+- **Decision:** Added `--host <address>` option to the CLI and `serve()` function. Default remains `localhost` (safe — no accidental network exposure). When set to `0.0.0.0`, the server binds to all interfaces and logs "accessible from LAN" to make the behavior explicit.
+- **Trade-offs:**
+  - **Safe default:** `localhost` means existing users see no behavior change.
+  - **No auth:** Binding to `0.0.0.0` exposes the dashboard to the entire LAN without authentication. Acceptable for a read-only dev dashboard on a trusted network. If auth is ever needed, that's a separate feature.
+  - **No HTTPS:** LAN kiosks typically don't need TLS. If needed later, a reverse proxy (nginx/caddy) is the right layer for that.
+- **Files changed:** `scripts/serve.js`, `bin/squad-monitor.js`, `README.md`
+- **Backward compatibility:** `npm run build`, `npm run dev`, and `npx squad-monitor build` work unchanged. Only adds optional `--host` argument.
+
 
