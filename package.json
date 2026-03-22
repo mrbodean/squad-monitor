@@ -1,6 +1,6 @@
 {
   "name": "squad-monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight static site generator for monitoring squad activity — thoughts, conversations, and decisions",
   "type": "module",
   "bin": {
@@ -16,12 +16,16 @@
     "src/",
     "scripts/"
   ],
-  "keywords": ["squad", "monitor", "ai-agents"],
+  "keywords": [
+    "squad",
+    "monitor",
+    "ai-agents"
+  ],
   "author": "Jonathan Warnken",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/mrbodean/squad-monitor.git"
+    "url": "git+https://github.com/mrbodean/squad-monitor.git"
   },
   "homepage": "https://github.com/mrbodean/squad-monitor#readme",
   "dependencies": {
