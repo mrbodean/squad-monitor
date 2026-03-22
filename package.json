@@ -1,6 +1,6 @@
 {
   "name": "squad-monitor",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Lightweight static site generator for monitoring squad activity — thoughts, conversations, and decisions",
   "type": "module",
   "bin": {
