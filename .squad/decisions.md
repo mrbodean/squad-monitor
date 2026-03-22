@@ -114,3 +114,20 @@
   2. Review quarterly during Reskill
   3. Update when decisions affect conventions
 - **Trade-off:** Could assign to Tyranus (docs), but conventions are architectural decisions. Sidious is better fit.
+
+### D-006: Squad Monitor Architecture — Static Site Generator
+- **By:** Sidious (recommendation), Vader (implementation)
+- **Date:** 2026-03-22
+- **Context:** Jonathan Warnken requested lightweight interface for viewing squad state. Sidious evaluated 4 architectural options (REST API, serverless, real-time server, static site). User chose Option 1 (static site) for lowest resource impact and operational complexity.
+- **Decision:** Build static site generator. Node.js script (`build.js`) reads `.squad/` metadata + `session_store.db` SQLite database → generates single `dist/index.html`. Pico.css dark theme. Tabbed interface: Dashboard, Decisions, Agents, Conversations, Orchestration, Search. All database queries run in-browser via sql.js (WASM).
+- **Trade-offs:**
+  - Must rebuild to see changes (vs. real-time server)
+  - No write API — squad state remains read-only from dashboard (vs. web server)
+  - Single-page architecture loads all content at once (vs. lazy loading)
+  - Mitigations: build is fast (~2s), in-browser full-text search on 29 sessions, lightweight CSS keeps payload lean
+- **Dependencies:** marked, sql.js, glob, node-glob
+- **Usage:** `npm run build && start dist\index.html` (or `open dist/index.html` on macOS/Linux)
+- **Output:** dist/index.html (383.8 KB) covers 9 agents, 9 decisions, 12 logs, 21 skills, 29 sessions
+- **Commit:** ac68617
+- **Impact:** Squad state is now discoverable and searchable without CLI. Foundation for future observability: trend analysis, workload metrics, decision impact tracking.
+
