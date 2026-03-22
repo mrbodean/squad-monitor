@@ -1,0 +1,33 @@
+{
+  "marketplaces": [
+    {
+      "name": "tamirdresher-squad-skills",
+      "repo": "tamirdresher/squad-skills",
+      "description": "Community skills marketplace by Tamir Dresher — reusable knowledge plugins for AI agents",
+      "added": "2026-03-22",
+      "status": "active"
+    }
+  ],
+  "installed_plugins": [
+    "news-broadcasting",
+    "fact-checking",
+    "github-project-board",
+    "session-recovery",
+    "restart-recovery",
+    "incident-response",
+    "cross-machine-coordination",
+    "github-distributed-coordination",
+    "secrets-management",
+    "teams-monitor",
+    "teams-ui-automation",
+    "outlook-automation",
+    "chrome-devtools-mcp",
+    "blog-writing",
+    "github-multi-account",
+    "agency-optimal-config",
+    "mail-mcp",
+    "squad-email-headless",
+    "gh-auth-isolation"
+  ],
+  "notes": "bradygaster/squad-skills (official) not yet available — will add when published. Reflect skill not installed from marketplace — using enhanced local version."
+}

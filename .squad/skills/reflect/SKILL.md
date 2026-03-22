@@ -53,14 +53,48 @@ No explicit statement, but a pattern emerges over time. The user consistently ma
 
 **Handling:** Track silently. Propose only when the pattern is clear — 3 or more consistent observations across at least 2 sessions. When proposing, cite the observations.
 
+### Confidence Thresholds
+
+When to surface learnings for approval:
+
+| Threshold | Action |
+|-----------|--------|
+| ≥1 HIGH signal | Always propose immediately (user explicitly corrected) |
+| ≥2 MEDIUM signals | Propose as batch (sufficient pattern) |
+| ≥3 LOW signals across ≥2 sessions | Propose (accumulated evidence) |
+| 1-2 LOW signals only | Skip — insufficient evidence, keep tracking silently |
+
 ### Invocation Protocol
 
 When an agent detects a correction or learning, they include a reflect block in their response:
 
 ```
+┌─────────────────────────────────────────────────────────────┐
+│ REFLECTION: {target}                                         │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│ [HIGH] + Add constraint: "{specific constraint}"            │
+│   Source: "{quoted user correction}"                        │
+│   Target: Agent knowledge base                              │
+│                                                             │
+│ [MED]  + Add preference: "{specific preference}"            │
+│   Source: "{evidence from conversation}"                    │
+│   Target: Shared guidelines                                 │
+│                                                             │
+│ [LOW]  ~ Note for review: "{observation}"                   │
+│   Source: "{pattern observed}"                              │
+│   Target: Session notes only                                │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│ Apply changes? [Y/n/edit]                                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+Compact format (for inline use):
+```
 📌 Reflect: {description of the learning}
    Confidence: {HIGH | MEDIUM | LOW}
-   Scope: {team | agent}
+   Scope: {team | agent | skill}
    Agent: {name of the agent proposing}
 ```
 
@@ -76,6 +110,7 @@ Where the learning gets written depends on its scope.
 |-------|-------------|------|
 | **team** | `.squad/decisions/inbox/{agent}-reflect-{slug}.md` | Learning applies to all agents (e.g., "never use library X in this project") |
 | **agent** | `.squad/agents/{name}/history.md` under `## Learnings` | Learning is specific to one agent's domain (e.g., "Vader should use async/await, not callbacks") |
+| **skill** | Session notes → skill owner reviews and updates SKILL.md | Learning about how a skill should work (e.g., "news-broadcasting should always include timestamps") |
 | **uncertain** | Default to **agent-specific** | Less noise. Can be promoted to team-wide later. |
 
 #### Decisions Inbox Format
@@ -172,3 +207,24 @@ Now proposed for review at next Reskill ceremony.
 - **Losing context.** A learning without context ("don't do X") is less useful than one with context ("don't do X because Y, as discovered when Z"). Always capture the why.
 - **Ignoring LOW signals.** Low-confidence observations are the early-warning system. Track them even if they seem minor — patterns reveal themselves over time.
 - **Reflecting on reflect.** Don't meta-reflect on the reflect process itself during normal work. Save process improvements for dedicated retros.
+
+## When to Use
+
+✅ **Use reflect when:**
+- User says "no", "wrong", "not like that" (HIGH priority)
+- User says "perfect", "exactly", "great" (MEDIUM priority)
+- You discover edge cases or gaps during work
+- Complex work session with multiple learnings
+- At end of sprint/milestone to consolidate patterns
+
+❌ **Don't use reflect when:**
+- Simple one-off questions with no pattern
+- User is just exploring ideas (no concrete decisions)
+- Learning is already captured in agent history
+- Trivial preferences unlikely to recur
+
+## See Also
+
+- [News Broadcasting](../news-broadcasting/) — Share team updates
+- [Fact Checking](../fact-checking/) — Verify accuracy
+- [Session Recovery](../session-recovery/) — Recover past sessions
