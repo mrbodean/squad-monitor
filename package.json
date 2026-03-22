@@ -21,9 +21,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/placeholder/squad-monitor.git"
+    "url": "https://github.com/mrbodean/squad-monitor.git"
   },
-  "homepage": "https://github.com/placeholder/squad-monitor#readme",
+  "homepage": "https://github.com/mrbodean/squad-monitor#readme",
   "dependencies": {
     "express": "^5.1.0",
     "marked": "^15.0.0",
