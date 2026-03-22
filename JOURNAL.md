@@ -75,7 +75,7 @@ The builder didn't ask for a changelog or a retro process. He asked for **learni
 
 The builder requested a lightweight interface for viewing squad state without persistent infrastructure. Sidious evaluated four architectural options. The squad built **Squad Monitor** — a Node.js static site generator that reads `.squad/` metadata and the session-store.db SQLite database, then generates a single-page HTML dashboard.
 
-**Output:** `dist/index.html` (383.8 KB)  
+**Output:** `.squad-monitor/index.html` (383.8 KB)  
 **Coverage:**
 - 9 agents (roles, charters, history)
 - 9 decisions (active decisions registry)

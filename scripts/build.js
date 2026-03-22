@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Squad Monitor — Static site build script.
- * Reads .squad/ files + session_store DB → generates dist/index.html
+ * Reads .squad/ files + session_store DB → generates .squad-monitor/index.html
  * Supports multi-squad mode via squads.config.json → generates hub.html + per-squad dashboards
  *
  * Usage: node scripts/build.js [--squad-root <path>] [--db <path>]
@@ -18,7 +18,7 @@ import { readSquadsConfig } from '../src/config-reader.js';
 export async function build(options = {}) {
   const effectiveSquadRoot = resolve(options.squadRoot || process.cwd());
   const effectiveDbPath = options.dbPath || null;
-  const effectiveOutDir = options.outDir || join(effectiveSquadRoot, 'dist');
+  const effectiveOutDir = options.outDir || join(effectiveSquadRoot, '.squad-monitor');
 
   const config = readSquadsConfig(effectiveSquadRoot);
 
@@ -77,8 +77,8 @@ async function buildMultiSquadInternal(config, effectiveSquadRoot, effectiveDbPa
   const sizeKb = (Buffer.byteLength(hubHtml, 'utf-8') / 1024).toFixed(1);
   const builtCount = Object.keys(squadsData).length;
   console.log(`\n✅ Built hub: ${hubPath} (${sizeKb} KB)`);
-  console.log(`✅ Built ${builtCount} squad dashboard${builtCount !== 1 ? 's' : ''} in dist/squads/`);
-  console.log(`\n📖 Open in browser:\n   start dist\\hub.html`);
+  console.log(`✅ Built ${builtCount} squad dashboard${builtCount !== 1 ? 's' : ''} in .squad-monitor/squads/`);
+  console.log(`\n📖 Open in browser:\n   start .squad-monitor\\hub.html`);
 }
 
 async function buildSingleSquadInternal(effectiveSquadRoot, effectiveDbPath, effectiveOutDir) {
@@ -117,7 +117,7 @@ async function buildSingleSquadInternal(effectiveSquadRoot, effectiveDbPath, eff
 
   const sizeKb = (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(1);
   console.log(`\n✅ Built: ${outPath} (${sizeKb} KB)`);
-  console.log(`\n📖 Open in browser:\n   start dist\\index.html`);
+  console.log(`\n📖 Open in browser:\n   start .squad-monitor\\index.html`);
 }
 
 // Self-execution when run directly

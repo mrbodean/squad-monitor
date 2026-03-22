@@ -9,7 +9,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
-    "view": "start dist/index.html"
+    "view": "start .squad-monitor/index.html"
   },
   "files": [
     "bin/",

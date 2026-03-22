@@ -31,7 +31,7 @@ npx squad-monitor --help
 npx squad-monitor build --squad-root ~/my-project --db ~/.copilot/session-store.db
 ```
 
-This generates `dist/index.html` in your current directory — a complete, self-contained dashboard ready to share or archive.
+This generates `.squad-monitor/index.html` in your current directory — a complete, self-contained dashboard ready to share or archive.
 
 ## Getting Started
 
@@ -55,19 +55,19 @@ npm run view
 
 **macOS / Linux:**
 ```bash
-open dist/index.html
+open .squad-monitor/index.html
 ```
 
-The `dist/index.html` is a complete, self-contained dashboard. No server, no runtime cost.
+The `.squad-monitor/index.html` is a complete, self-contained dashboard. No server, no runtime cost.
 
 ## Static Mode (Zero Cost)
 
 **Perfect for:** Sharing reports, archiving decisions, offline browsing.
 
 ```bash
-npm run build      # Generates dist/index.html
-start dist/index.html   # Windows
-open dist/index.html    # macOS/Linux
+npm run build      # Generates .squad-monitor/index.html
+start .squad-monitor/index.html   # Windows
+open .squad-monitor/index.html    # macOS/Linux
 ```
 
 The output is a single HTML file with all data embedded. To refresh, re-run `npm run build` and reload the browser.
@@ -109,7 +109,7 @@ npm run dev -- --port 8080 --squad-root ./my-squad --db ~/.copilot/session-store
 | `src/data-reader.js` | Reads `.squad/` markdown files |
 | `src/session-reader.js` | Reads Copilot session-store.db (sql.js WASM) |
 | `src/html-generator.js` | Generates HTML with Pico.css dark theme |
-| `scripts/build.js` | Static build: `.squad/` + DB → dist/index.html |
+| `scripts/build.js` | Static build: `.squad/` + DB → .squad-monitor/index.html |
 | `scripts/serve.js` | Live server: Express + auto-refresh |
 
 ## Data Sources
