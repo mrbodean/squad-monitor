@@ -4,7 +4,7 @@
  * Serves the dashboard with auto-refresh on .squad/ file changes.
  * Supports multi-squad mode via squads.config.json.
  *
- * Usage: node scripts/serve.js [--squad-root <path>] [--db <path>] [--port <port>]
+ * Usage: node scripts/serve.js [--squad-root <path>] [--db <path>] [--port <port>] [--host <address>]
  */
 import express from 'express';
 import { readdirSync, statSync, existsSync } from 'fs';
@@ -18,6 +18,7 @@ export async function serve(options = {}) {
   const effectiveSquadRoot = resolve(options.squadRoot || process.cwd());
   const effectiveDbPath = options.dbPath || null;
   const effectivePort = options.port || 3000;
+  const effectiveHost = options.host || 'localhost';
   const effectiveSquadDir = join(effectiveSquadRoot, '.squad');
 
   const app = express();
@@ -122,12 +123,19 @@ export async function serve(options = {}) {
   });
 
   return new Promise((resolvePromise) => {
-    app.listen(effectivePort, () => {
+    app.listen(effectivePort, effectiveHost, () => {
       const config = readSquadsConfig(effectiveSquadRoot);
+      const displayHost = effectiveHost === '0.0.0.0' ? 'all interfaces' : effectiveHost;
+      const url = effectiveHost === '0.0.0.0'
+        ? `http://localhost:${effectivePort}`
+        : `http://${effectiveHost}:${effectivePort}`;
       if (config) {
-        console.log(`🔴 Squad Monitor Hub live at http://localhost:${effectivePort} (${config.squads.length} squads, auto-refresh every 10s)`);
+        console.log(`🔴 Squad Monitor Hub live at ${url} (${config.squads.length} squads, auto-refresh every 10s)`);
       } else {
-        console.log(`🔴 Squad Monitor live at http://localhost:${effectivePort} (auto-refresh every 10s)`);
+        console.log(`🔴 Squad Monitor live at ${url} (auto-refresh every 10s)`);
+      }
+      if (effectiveHost === '0.0.0.0') {
+        console.log(`   Listening on ${displayHost} — accessible from LAN`);
       }
       console.log(`   Squad root: ${effectiveSquadRoot}`);
       console.log(`   Press Ctrl+C to stop`);
@@ -150,8 +158,9 @@ if (isMainModule) {
   const squadRoot = getArg('--squad-root') || process.cwd();
   const dbPath = getArg('--db') || null;
   const port = parseInt(getArg('--port') || process.env.PORT || '3000', 10);
+  const host = getArg('--host') || 'localhost';
 
-  serve({ squadRoot, dbPath, port }).catch(err => {
+  serve({ squadRoot, dbPath, port, host }).catch(err => {
     console.error('❌ Server failed:', err);
     process.exit(1);
   });

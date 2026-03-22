@@ -21,6 +21,7 @@ npx squad-monitor --help
 - `--squad-root <path>` — Path to squad project root (default: current directory)
 - `--db <path>` — Path to session store database (default: `~/.copilot/session-store.db`)
 - `--port <port>` — Dev server port (default: 3000)
+- `--host <address>` — Bind address for dev server (default: `localhost`). Use `0.0.0.0` to listen on all interfaces — useful for DAKboard, kiosk wall displays, or any LAN device.
 
 **Requirements:**
 - Node.js 18+ (automatically downloaded by npx)
@@ -112,6 +113,9 @@ npm run dev
 ```bash
 # Portable
 npx squad-monitor dev --port 8080 --squad-root ./my-squad --db ~/.copilot/session-store.db
+
+# Listen on all interfaces (for DAKboard / kiosk displays on your LAN)
+npx squad-monitor dev --host 0.0.0.0
 
 # Local
 npm run dev -- --port 8080 --squad-root ./my-squad --db ~/.copilot/session-store.db

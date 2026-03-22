@@ -12,6 +12,7 @@
  *   --squad-root <path>    Path to squad directory (default: cwd)
  *   --db <path>            Path to session store database
  *   --port <port>          Port for dev server (default: 3000, dev mode only)
+ *   --host <address>       Bind address (default: localhost, dev mode only)
  */
 
 import { readFileSync } from 'fs';
@@ -62,10 +63,13 @@ Options:
   --squad-root <path>    Path to squad directory (default: current directory)
   --db <path>            Path to session store database
   --port <port>          Port for dev server (default: 3000, dev mode only)
+  --host <address>       Bind address (default: localhost, dev mode only)
+                         Use 0.0.0.0 for LAN access (DAKboard, kiosk displays)
 
 Examples:
   squad-monitor build
   squad-monitor dev --port 4000
+  squad-monitor dev --host 0.0.0.0
   squad-monitor build --squad-root /path/to/squad --db /path/to/db
 `);
   process.exit(0);
@@ -75,6 +79,7 @@ Examples:
 const squadRoot = getArg('--squad-root') || process.cwd();
 const dbPath = getArg('--db') || null;
 const port = parseInt(getArg('--port') || '3000', 10);
+const host = getArg('--host') || 'localhost';
 
 // Validate squad root
 const squadDir = resolve(join(squadRoot, '.squad'));
@@ -93,7 +98,7 @@ if (command === 'build') {
   await build({ squadRoot, dbPath });
 } else if (command === 'dev') {
   const { serve } = await import('../scripts/serve.js');
-  await serve({ squadRoot, dbPath, port });
+  await serve({ squadRoot, dbPath, port, host });
 } else {
   console.error(`❌ Unknown command: ${command}`);
   console.error(`   Run 'squad-monitor --help' for usage information.`);
