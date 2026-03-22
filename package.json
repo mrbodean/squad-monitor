@@ -3,14 +3,27 @@
   "version": "1.0.0",
   "description": "Lightweight static site generator for monitoring squad activity — thoughts, conversations, and decisions",
   "type": "module",
+  "bin": {
+    "squad-monitor": "bin/squad-monitor.js"
+  },
   "scripts": {
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
     "view": "start dist/index.html"
   },
+  "files": [
+    "bin/",
+    "src/",
+    "scripts/"
+  ],
   "keywords": ["squad", "monitor", "ai-agents"],
   "author": "Jonathan Warnken",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/placeholder/squad-monitor.git"
+  },
+  "homepage": "https://github.com/placeholder/squad-monitor#readme",
   "dependencies": {
     "express": "^5.1.0",
     "marked": "^15.0.0",

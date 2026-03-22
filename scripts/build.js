@@ -13,59 +13,25 @@ import { readSessionStore } from '../src/session-reader.js';
 import { generateHtml, generateHubHtml } from '../src/html-generator.js';
 import { readSquadsConfig } from '../src/config-reader.js';
 
-// Parse CLI args
-const args = process.argv.slice(2);
-function getArg(name) {
-  const idx = args.indexOf(name);
-  return idx >= 0 && args[idx + 1] ? args[idx + 1] : null;
-}
 
-const squadRoot = resolve(getArg('--squad-root') || process.cwd());
-const dbPath = getArg('--db') || null;
-const outDir = join(squadRoot, 'dist');
 
-async function buildSingleSquad() {
-  console.log(`🏗️  Squad Monitor — Building static site`);
-  console.log(`   Squad root: ${squadRoot}`);
+export async function build(options = {}) {
+  const effectiveSquadRoot = resolve(options.squadRoot || process.cwd());
+  const effectiveDbPath = options.dbPath || null;
+  const effectiveOutDir = options.outDir || join(effectiveSquadRoot, 'dist');
 
-  // Read .squad/ data
-  console.log(`📂 Reading .squad/ files...`);
-  const squadData = readSquadData(squadRoot);
-  console.log(`   ✅ Team: ${squadData.team.name} (${squadData.team.members.length} members)`);
-  console.log(`   ✅ Agents: ${squadData.agents.length}`);
-  console.log(`   ✅ Decisions: ${(squadData.decisions.main.match(/^### D-/gm) || []).length} active, ${squadData.decisions.inbox.length} pending`);
-  console.log(`   ✅ Logs: ${squadData.logs.length}`);
-  console.log(`   ✅ Skills: ${squadData.skills.length}`);
-  if (squadData.subSquads.length > 0) {
-    console.log(`   ✅ Sub-squads: ${squadData.subSquads.length}`);
-  }
+  const config = readSquadsConfig(effectiveSquadRoot);
 
-  // Read session store
-  console.log(`💾 Reading session store...`);
-  const sessions = await readSessionStore(dbPath);
-  if (sessions.available) {
-    console.log(`   ✅ ${sessions.sessions.length} sessions found (${sessions.dbPath})`);
+  if (config) {
+    await buildMultiSquadInternal(config, effectiveSquadRoot, effectiveDbPath, effectiveOutDir);
   } else {
-    console.log(`   ⚠️  Session store not found — conversations tab will be empty`);
+    await buildSingleSquadInternal(effectiveSquadRoot, effectiveDbPath, effectiveOutDir);
   }
-
-  // Generate HTML
-  console.log(`🎨 Generating HTML...`);
-  const html = generateHtml({ ...squadData, sessions }, { liveMode: false });
-
-  // Write output
-  mkdirSync(outDir, { recursive: true });
-  const outPath = join(outDir, 'index.html');
-  writeFileSync(outPath, html, 'utf-8');
-
-  const sizeKb = (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(1);
-  console.log(`\n✅ Built: ${outPath} (${sizeKb} KB)`);
-  console.log(`\n📖 Open in browser:\n   start dist\\index.html`);
 }
 
-async function buildMultiSquad(config) {
+async function buildMultiSquadInternal(config, effectiveSquadRoot, effectiveDbPath, effectiveOutDir) {
   console.log(`🏗️  Squad Monitor — Building multi-squad hub`);
-  console.log(`   Squad root: ${squadRoot}`);
+  console.log(`   Squad root: ${effectiveSquadRoot}`);
   console.log(`   Squads configured: ${config.squads.length}`);
 
   const squadsData = {};
@@ -86,12 +52,12 @@ async function buildMultiSquad(config) {
         console.log(`   ✅ Sub-squads: ${squadData.subSquads.length}`);
       }
 
-      const sessions = await readSessionStore(dbPath);
+      const sessions = await readSessionStore(effectiveDbPath);
       squadsData[sq.id] = { ...squadData, sessions };
 
       // Build individual squad dashboard
       const squadHtml = generateHtml({ ...squadData, sessions }, { liveMode: false });
-      const squadOutDir = join(outDir, 'squads', sq.id);
+      const squadOutDir = join(effectiveOutDir, 'squads', sq.id);
       mkdirSync(squadOutDir, { recursive: true });
       const squadOutPath = join(squadOutDir, 'index.html');
       writeFileSync(squadOutPath, squadHtml, 'utf-8');
@@ -104,8 +70,8 @@ async function buildMultiSquad(config) {
   // Build hub page
   console.log(`\n🎨 Generating hub page...`);
   const hubHtml = generateHubHtml(config, squadsData, { liveMode: false });
-  mkdirSync(outDir, { recursive: true });
-  const hubPath = join(outDir, 'hub.html');
+  mkdirSync(effectiveOutDir, { recursive: true });
+  const hubPath = join(effectiveOutDir, 'hub.html');
   writeFileSync(hubPath, hubHtml, 'utf-8');
 
   const sizeKb = (Buffer.byteLength(hubHtml, 'utf-8') / 1024).toFixed(1);
@@ -115,17 +81,61 @@ async function buildMultiSquad(config) {
   console.log(`\n📖 Open in browser:\n   start dist\\hub.html`);
 }
 
-async function build() {
-  const config = readSquadsConfig(squadRoot);
+async function buildSingleSquadInternal(effectiveSquadRoot, effectiveDbPath, effectiveOutDir) {
+  console.log(`🏗️  Squad Monitor — Building static site`);
+  console.log(`   Squad root: ${effectiveSquadRoot}`);
 
-  if (config) {
-    await buildMultiSquad(config);
-  } else {
-    await buildSingleSquad();
+  // Read .squad/ data
+  console.log(`📂 Reading .squad/ files...`);
+  const squadData = readSquadData(effectiveSquadRoot);
+  console.log(`   ✅ Team: ${squadData.team.name} (${squadData.team.members.length} members)`);
+  console.log(`   ✅ Agents: ${squadData.agents.length}`);
+  console.log(`   ✅ Decisions: ${(squadData.decisions.main.match(/^### D-/gm) || []).length} active, ${squadData.decisions.inbox.length} pending`);
+  console.log(`   ✅ Logs: ${squadData.logs.length}`);
+  console.log(`   ✅ Skills: ${squadData.skills.length}`);
+  if (squadData.subSquads.length > 0) {
+    console.log(`   ✅ Sub-squads: ${squadData.subSquads.length}`);
   }
+
+  // Read session store
+  console.log(`💾 Reading session store...`);
+  const sessions = await readSessionStore(effectiveDbPath);
+  if (sessions.available) {
+    console.log(`   ✅ ${sessions.sessions.length} sessions found (${sessions.dbPath})`);
+  } else {
+    console.log(`   ⚠️  Session store not found — conversations tab will be empty`);
+  }
+
+  // Generate HTML
+  console.log(`🎨 Generating HTML...`);
+  const html = generateHtml({ ...squadData, sessions }, { liveMode: false });
+
+  // Write output
+  mkdirSync(effectiveOutDir, { recursive: true });
+  const outPath = join(effectiveOutDir, 'index.html');
+  writeFileSync(outPath, html, 'utf-8');
+
+  const sizeKb = (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(1);
+  console.log(`\n✅ Built: ${outPath} (${sizeKb} KB)`);
+  console.log(`\n📖 Open in browser:\n   start dist\\index.html`);
 }
 
-build().catch(err => {
-  console.error('❌ Build failed:', err);
-  process.exit(1);
-});
+// Self-execution when run directly
+import { fileURLToPath } from 'url';
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
+  const args = process.argv.slice(2);
+  function getArg(name) {
+    const idx = args.indexOf(name);
+    return idx >= 0 && args[idx + 1] ? args[idx + 1] : null;
+  }
+
+  const squadRoot = getArg('--squad-root') || process.cwd();
+  const dbPath = getArg('--db') || null;
+
+  build({ squadRoot, dbPath }).catch(err => {
+    console.error('❌ Build failed:', err);
+    process.exit(1);
+  });
+}
