@@ -133,23 +133,43 @@ function genAgents(data) {
   return `
     <h2>🤖 Agents</h2>
     <div class="grid">
-      ${agents.map(a => `
-        <article class="agent-card" onclick="this.querySelector('details')?.toggleAttribute('open')">
+      ${agents.map(a => {
+        const slug = a.name.toLowerCase().replace(/\s+/g, '-');
+        return `
+        <article class="agent-card" data-agent="${slug}">
           <header>${esc(a.name)}</header>
           <p><small>${esc(a.role)}</small></p>
-          <details>
-            <summary>View Charter</summary>
-            <div class="md-content">${md(a.charter)}</div>
-            ${a.history ? `
-              <hr>
-              <h4>📚 History</h4>
-              <div class="md-content">${md(a.history)}</div>
-            ` : ''}
-          </details>
         </article>
-      `).join('')}
+      `;
+      }).join('')}
     </div>
   `;
+}
+
+/**
+ * Generate agent detail sections (one per agent).
+ * These are hidden by default and shown when an agent card is clicked.
+ */
+function genAgentDetails(data) {
+  const { agents } = data;
+
+  return agents.map(a => {
+    const slug = a.name.toLowerCase().replace(/\s+/g, '-');
+    return `
+    <section id="agent-detail-${slug}" class="agent-detail">
+      <a href="#" class="back-link">← Back to Agents</a>
+      <hgroup>
+        <h2>${esc(a.name)}</h2>
+        <p>${esc(a.role)}</p>
+      </hgroup>
+      <div class="md-content">${md(a.charter)}</div>
+      ${a.history ? `
+        <hr>
+        <h3>📚 History</h3>
+        <div class="md-content">${md(a.history)}</div>
+      ` : ''}
+    </section>`;
+  }).join('\n');
 }
 
 /**
@@ -340,6 +360,10 @@ export function generateHtml(data, options = {}) {
     .grid article { margin: 0; }
     .agent-card { cursor: pointer; }
     .agent-card:hover { border-color: var(--pico-primary); }
+    .agent-detail { display: none; }
+    .agent-detail.active { display: block; }
+    .back-link { display: inline-block; margin-bottom: 1rem; text-decoration: none; color: var(--pico-primary); cursor: pointer; }
+    .back-link:hover { text-decoration: underline; }
     .turn { padding: 0.5rem 0; }
     .md-content { max-height: 600px; overflow-y: auto; }
     details summary { cursor: pointer; }
@@ -373,6 +397,8 @@ export function generateHtml(data, options = {}) {
       ${t.content}
     </section>`).join('\n')}
 
+    ${genAgentDetails(data)}
+
     <div class="build-info">
       Generated ${new Date().toISOString()} · Squad Monitor v1.0.0
     </div>
@@ -393,10 +419,54 @@ function getInlineScript(liveMode) {
     '    const tabId = link.dataset.tab;',
     '    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));',
     '    document.querySelectorAll("nav a").forEach(el => el.classList.remove("active"));',
+    '    document.querySelectorAll(".agent-detail").forEach(el => el.classList.remove("active"));',
     '    document.getElementById("tab-" + tabId).classList.add("active");',
     '    link.classList.add("active");',
+    '    window.location.hash = "";',
     '  });',
     '});',
+    '',
+    '// Agent card navigation',
+    'document.querySelectorAll(".agent-card").forEach(card => {',
+    '  card.addEventListener("click", function() {',
+    '    const agentSlug = card.dataset.agent;',
+    '    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));',
+    '    document.querySelectorAll(".agent-detail").forEach(el => el.classList.remove("active"));',
+    '    const detailSection = document.getElementById("agent-detail-" + agentSlug);',
+    '    if (detailSection) {',
+    '      detailSection.classList.add("active");',
+    '      window.location.hash = "agent/" + agentSlug;',
+    '    }',
+    '  });',
+    '});',
+    '',
+    '// Back to agents link',
+    'document.querySelectorAll(".back-link").forEach(link => {',
+    '  link.addEventListener("click", function(e) {',
+    '    e.preventDefault();',
+    '    document.querySelectorAll(".agent-detail").forEach(el => el.classList.remove("active"));',
+    '    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));',
+    '    document.getElementById("tab-agents").classList.add("active");',
+    '    document.querySelectorAll("nav a").forEach(el => el.classList.remove("active"));',
+    '    document.querySelector("nav a[data-tab=\'agents\']").classList.add("active");',
+    '    window.location.hash = "";',
+    '  });',
+    '});',
+    '',
+    '// Handle initial page load with hash',
+    'function handleInitialHash() {',
+    '  const hash = window.location.hash.slice(1);',
+    '  if (hash.startsWith("agent/")) {',
+    '    const agentSlug = hash.replace("agent/", "");',
+    '    const detailSection = document.getElementById("agent-detail-" + agentSlug);',
+    '    if (detailSection) {',
+    '      document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));',
+    '      document.querySelectorAll(".agent-detail").forEach(el => el.classList.remove("active"));',
+    '      detailSection.classList.add("active");',
+    '    }',
+    '  }',
+    '}',
+    'handleInitialHash();',
     '',
     '// Client-side search',
     'function doSearch(query) {',
