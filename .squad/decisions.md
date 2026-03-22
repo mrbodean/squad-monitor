@@ -174,4 +174,15 @@
 - **Error handling:** Graceful error with helpful message when `.squad/` directory not found
 - **Commit:** f8fcb86
 
+### D-010: Rename Build Output Directory from `dist` to `.squad-monitor`
+- **By:** Vader (implementation), Jonathan Warnken (request)
+- **Date:** 2026-03-22
+- **Context:** Generic `dist/` directory name didn't communicate what the output was. Requested rename to `.squad-monitor/` for clarity.
+- **Decision:** Renamed build output from `dist/` to `.squad-monitor/` in all source files, scripts, docs, and gitignore. Historical decision records (D-006, D-008, D-009) left unchanged as they document past state accurately.
+- **Files changed:** `scripts/build.js`, `scripts/serve.js`, `package.json`, `.gitignore`, `README.md`, `bin/squad-monitor.js`
+- **Backward compatibility:** `npm run build`, `npm run dev`, and `npx squad-monitor build` all work unchanged. Only the output directory name changed.
+- **Trade-offs:** Dotfile directory (`.squad-monitor`) is hidden by default on macOS/Linux — acceptable since output is accessed via `npm run view` or explicit path, not casual browsing.
+- **Build verified:** Output at `.squad-monitor/index.html` (392 KB)
+- **Commit:** 286fe1c
+
 
