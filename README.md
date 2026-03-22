@@ -2,6 +2,8 @@
 
 A browser dashboard for visualizing squad activity, decisions, and agent interactions from the Copilot CLI session store and `.squad/` directory. Choose static mode for zero cost or live mode for auto-refresh.
 
+> 🤖 **Built by AI.** This project was conceived, designed, and coded entirely by an AI development team using [Squad](https://github.com/bradygaster/squad) — a multi-agent coordination framework for GitHub Copilot. Community contributions, feedback, and ideas are welcome — feel free to open an issue or submit a PR.
+
 ## Portable Usage (npx)
 
 Run Squad Monitor as a portable CLI from any directory — no need to clone this repo or install dependencies locally.
