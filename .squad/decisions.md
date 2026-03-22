@@ -131,3 +131,16 @@
 - **Commit:** ac68617
 - **Impact:** Squad state is now discoverable and searchable without CLI. Foundation for future observability: trend analysis, workload metrics, decision impact tracking.
 
+### D-007: Add Live Mode with Auto-Refresh Dev Server
+- **By:** Vader (implementation), Jonathan Warnken (request)
+- **Date:** 2025-07-21
+- **Context:** Static-only dashboard required manual rebuild (`npm run build`) to see changes. Jonathan requested a live mode where the dashboard auto-refreshes when `.squad/` data changes.
+- **Decision:** Add Express-based dev server (`npm run dev`) alongside static build. Server regenerates HTML on each request with `liveMode: true`. Client polls `/api/timestamp` every 10s; reloads on change. Static build (`npm run build`) is unchanged — passes `liveMode: false`.
+- **Trade-offs:**
+  - Express added as dependency (~65 packages) — acceptable for dev tooling
+  - Full page reload on change (not incremental DOM update) — keeps implementation simple, ~50 lines
+  - Polling at 10s interval vs. file watcher — simpler, cross-platform, no native deps
+- **Dependencies:** express ^5.1.0
+- **Usage:** `npm run dev` → opens at http://localhost:3000
+- **Commit:** 9cad76a
+
