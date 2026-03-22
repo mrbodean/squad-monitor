@@ -41,9 +41,17 @@ This generates `.squad-monitor/index.html` in your current directory — a compl
 
 ### Install and Build
 
+**Portable (npx):**
+```bash
+npx squad-monitor build
+npx squad-monitor dev
+```
+
+**Local development (cloned repo):**
 ```bash
 npm install
 npm run build
+npm run dev
 ```
 
 ### View the Dashboard
@@ -65,18 +73,30 @@ The `.squad-monitor/index.html` is a complete, self-contained dashboard. No serv
 **Perfect for:** Sharing reports, archiving decisions, offline browsing.
 
 ```bash
-npm run build      # Generates .squad-monitor/index.html
+# Portable (npx) — works from any directory
+npx squad-monitor build
+
+# Local development (cloned repo)
+npm run build
+```
+
+Then open the generated file:
+```bash
 start .squad-monitor/index.html   # Windows
 open .squad-monitor/index.html    # macOS/Linux
 ```
 
-The output is a single HTML file with all data embedded. To refresh, re-run `npm run build` and reload the browser.
+The output is a single HTML file with all data embedded. To refresh, re-run the build command and reload the browser.
 
 ## Live Mode (Auto-Refresh)
 
 **Perfect for:** Development and real-time monitoring.
 
 ```bash
+# Portable (npx) — works from any directory
+npx squad-monitor dev
+
+# Local development (cloned repo)
 npm run dev
 ```
 
@@ -90,6 +110,10 @@ npm run dev
 
 **Arguments:**
 ```bash
+# Portable
+npx squad-monitor dev --port 8080 --squad-root ./my-squad --db ~/.copilot/session-store.db
+
+# Local
 npm run dev -- --port 8080 --squad-root ./my-squad --db ~/.copilot/session-store.db
 ```
 
