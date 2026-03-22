@@ -144,3 +144,16 @@
 - **Usage:** `npm run dev` → opens at http://localhost:3000
 - **Commit:** 9cad76a
 
+### D-008: Multi-Squad + Sub-Squad Monitoring (Phase 1 + 2)
+- **By:** Vader (implementation), Sidious (architecture — D-inbox proposal)
+- **Date:** 2026-03-22
+- **Context:** Jonathan approved Sidious's multi-squad/sub-squad architecture design. Implemented both phases in one pass.
+- **Decision:**
+  - **Phase 1 (Sub-Squads):** `data-reader.js` scans `.squad/sub-squads/{name}/` for nested `.squad/` dirs. Dashboard shows Sub-Squads tab (only when sub-squads exist) with expandable cards showing team roster, agents, and decisions per workstream.
+  - **Phase 2 (Multi-Squad Hub):** New `src/config-reader.js` reads optional `squads.config.json`. When present: `build.js` generates `dist/hub.html` + per-squad dashboards in `dist/squads/{id}/`; `serve.js` serves hub at `/` and squads at `/squads/:id`.
+  - **Backward compatible:** Without `squads.config.json`, everything works exactly as before.
+  - **Template safety:** Hub inline scripts use string-array-join pattern (no `${}` in client JS).
+- **Trade-offs:** Hub rebuilds all squads on every build (acceptable for <10 squads). Session store is shared across all squads (same DB path).
+- **Files:** Created `src/config-reader.js`. Modified `src/data-reader.js`, `src/html-generator.js`, `scripts/build.js`, `scripts/serve.js`.
+
+

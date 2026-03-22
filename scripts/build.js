@@ -2,14 +2,16 @@
 /**
  * Squad Monitor — Static site build script.
  * Reads .squad/ files + session_store DB → generates dist/index.html
+ * Supports multi-squad mode via squads.config.json → generates hub.html + per-squad dashboards
  *
  * Usage: node scripts/build.js [--squad-root <path>] [--db <path>]
  */
-import { writeFileSync, mkdirSync } from 'fs';
-import { join, resolve } from 'path';
+import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { join, resolve, dirname } from 'path';
 import { readSquadData } from '../src/data-reader.js';
 import { readSessionStore } from '../src/session-reader.js';
-import { generateHtml } from '../src/html-generator.js';
+import { generateHtml, generateHubHtml } from '../src/html-generator.js';
+import { readSquadsConfig } from '../src/config-reader.js';
 
 // Parse CLI args
 const args = process.argv.slice(2);
@@ -22,7 +24,7 @@ const squadRoot = resolve(getArg('--squad-root') || process.cwd());
 const dbPath = getArg('--db') || null;
 const outDir = join(squadRoot, 'dist');
 
-async function build() {
+async function buildSingleSquad() {
   console.log(`🏗️  Squad Monitor — Building static site`);
   console.log(`   Squad root: ${squadRoot}`);
 
@@ -34,6 +36,9 @@ async function build() {
   console.log(`   ✅ Decisions: ${(squadData.decisions.main.match(/^### D-/gm) || []).length} active, ${squadData.decisions.inbox.length} pending`);
   console.log(`   ✅ Logs: ${squadData.logs.length}`);
   console.log(`   ✅ Skills: ${squadData.skills.length}`);
+  if (squadData.subSquads.length > 0) {
+    console.log(`   ✅ Sub-squads: ${squadData.subSquads.length}`);
+  }
 
   // Read session store
   console.log(`💾 Reading session store...`);
@@ -56,6 +61,68 @@ async function build() {
   const sizeKb = (Buffer.byteLength(html, 'utf-8') / 1024).toFixed(1);
   console.log(`\n✅ Built: ${outPath} (${sizeKb} KB)`);
   console.log(`\n📖 Open in browser:\n   start dist\\index.html`);
+}
+
+async function buildMultiSquad(config) {
+  console.log(`🏗️  Squad Monitor — Building multi-squad hub`);
+  console.log(`   Squad root: ${squadRoot}`);
+  console.log(`   Squads configured: ${config.squads.length}`);
+
+  const squadsData = {};
+
+  for (const sq of config.squads) {
+    console.log(`\n📂 Reading squad: ${sq.name} (${sq.resolved.root})`);
+
+    if (!existsSync(sq.resolved.squadDir)) {
+      console.warn(`   ⚠️  Squad dir not found: ${sq.resolved.squadDir} — skipping`);
+      continue;
+    }
+
+    try {
+      const squadData = readSquadData(sq.resolved.root);
+      console.log(`   ✅ Team: ${squadData.team.name} (${squadData.team.members.length} members)`);
+      console.log(`   ✅ Agents: ${squadData.agents.length}`);
+      if (squadData.subSquads.length > 0) {
+        console.log(`   ✅ Sub-squads: ${squadData.subSquads.length}`);
+      }
+
+      const sessions = await readSessionStore(dbPath);
+      squadsData[sq.id] = { ...squadData, sessions };
+
+      // Build individual squad dashboard
+      const squadHtml = generateHtml({ ...squadData, sessions }, { liveMode: false });
+      const squadOutDir = join(outDir, 'squads', sq.id);
+      mkdirSync(squadOutDir, { recursive: true });
+      const squadOutPath = join(squadOutDir, 'index.html');
+      writeFileSync(squadOutPath, squadHtml, 'utf-8');
+      console.log(`   ✅ Built: ${squadOutPath}`);
+    } catch (err) {
+      console.warn(`   ⚠️  Failed to build squad "${sq.name}": ${err.message}`);
+    }
+  }
+
+  // Build hub page
+  console.log(`\n🎨 Generating hub page...`);
+  const hubHtml = generateHubHtml(config, squadsData, { liveMode: false });
+  mkdirSync(outDir, { recursive: true });
+  const hubPath = join(outDir, 'hub.html');
+  writeFileSync(hubPath, hubHtml, 'utf-8');
+
+  const sizeKb = (Buffer.byteLength(hubHtml, 'utf-8') / 1024).toFixed(1);
+  const builtCount = Object.keys(squadsData).length;
+  console.log(`\n✅ Built hub: ${hubPath} (${sizeKb} KB)`);
+  console.log(`✅ Built ${builtCount} squad dashboard${builtCount !== 1 ? 's' : ''} in dist/squads/`);
+  console.log(`\n📖 Open in browser:\n   start dist\\hub.html`);
+}
+
+async function build() {
+  const config = readSquadsConfig(squadRoot);
+
+  if (config) {
+    await buildMultiSquad(config);
+  } else {
+    await buildSingleSquad();
+  }
 }
 
 build().catch(err => {

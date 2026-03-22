@@ -163,6 +163,36 @@ export function readSkills(squadRoot) {
 }
 
 /**
+ * Read sub-squads from .squad/sub-squads/{name}/ directories.
+ * Each sub-squad dir must contain a .squad/ subdirectory to be recognized.
+ * Returns empty array if no sub-squads directory exists.
+ */
+export function readSubSquads(squadRoot) {
+  const subSquadsDir = join(squadRoot, '.squad', 'sub-squads');
+  if (!existsSync(subSquadsDir)) return [];
+
+  const subSquads = [];
+  for (const name of listDirs(subSquadsDir)) {
+    const subRoot = join(subSquadsDir, name);
+    const subSquadDir = join(subRoot, '.squad');
+    if (!existsSync(subSquadDir) || !statSync(subSquadDir).isDirectory()) continue;
+
+    const team = readTeam(subRoot);
+    const agents = readAgents(subRoot, team.members);
+    const decisions = readDecisions(subRoot);
+    subSquads.push({
+      id: name,
+      isSubSquad: true,
+      team,
+      agents,
+      decisions
+    });
+  }
+
+  return subSquads;
+}
+
+/**
  * Read all squad data into a single object.
  */
 export function readSquadData(squadRoot) {
@@ -173,6 +203,7 @@ export function readSquadData(squadRoot) {
     decisions: readDecisions(squadRoot),
     logs: readLogs(squadRoot),
     ceremonies: readCeremonies(squadRoot),
-    skills: readSkills(squadRoot)
+    skills: readSkills(squadRoot),
+    subSquads: readSubSquads(squadRoot)
   };
 }

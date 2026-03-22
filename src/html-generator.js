@@ -35,9 +35,10 @@ function formatDate(ts) {
  * Generate the Dashboard tab content.
  */
 function genDashboard(data) {
-  const { team, agents, decisions, logs, skills, sessions } = data;
+  const { team, agents, decisions, logs, skills, sessions, subSquads } = data;
   const pendingDecisions = decisions.inbox.length;
   const activeDecisions = (decisions.main.match(/^### D-/gm) || []).length;
+  const hasSubSquads = subSquads && subSquads.length > 0;
 
   return `
     <h2>📊 Dashboard</h2>
@@ -72,7 +73,12 @@ function genDashboard(data) {
         <header>💬 Sessions</header>
         <p><strong>${sessions.sessions.length}</strong> recorded</p>
         <p>${sessions.available ? '✅ Session store connected' : '⚠️ Session store unavailable'}</p>
-      </article>
+      </article>${hasSubSquads ? `
+      <article>
+        <header>🏢 Sub-Squads</header>
+        <p><strong>${subSquads.length}</strong> workstreams</p>
+        <p>${subSquads.reduce(function(sum, s) { return sum + s.agents.length; }, 0)} total agents</p>
+      </article>` : ''}
     </div>
 
     ${pendingDecisions > 0 ? `
@@ -237,18 +243,78 @@ function genSearch() {
 }
 
 /**
+ * Generate the Sub-Squads tab content.
+ * Only rendered when sub-squads exist.
+ */
+function genSubSquads(data) {
+  const { subSquads } = data;
+  if (!subSquads || subSquads.length === 0) return '';
+
+  return `
+    <h2>🏢 Sub-Squads</h2>
+    <p>${subSquads.length} workstream${subSquads.length !== 1 ? 's' : ''} detected</p>
+    ${subSquads.map(function(sq) {
+      const activeDecisions = (sq.decisions.main.match(/^### D-/gm) || []).length;
+      const pendingDecisions = sq.decisions.inbox.length;
+      return `
+      <details>
+        <summary>
+          <strong>${esc(sq.id)}</strong>
+          — ${esc(sq.team.name)}
+          <small>(${sq.agents.length} agents, ${activeDecisions} decisions)</small>
+        </summary>
+        <div style="padding-left: 1rem;">
+          <h4>Team Roster</h4>
+          ${sq.team.members.length > 0 ? `
+          <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody>
+              ${sq.team.members.map(function(m) {
+                return '<tr><td>' + esc(m.name) + '</td><td>' + esc(m.role) + '</td><td>' + esc(m.status) + '</td></tr>';
+              }).join('')}
+            </tbody>
+          </table>` : '<p>No team members listed.</p>'}
+
+          <h4>Agents (${sq.agents.length})</h4>
+          ${sq.agents.length > 0 ? `
+          <div class="grid">
+            ${sq.agents.map(function(a) {
+              return '<article><header>' + esc(a.name) + '</header><p><small>' + esc(a.role) + '</small></p></article>';
+            }).join('')}
+          </div>` : '<p>No agents registered.</p>'}
+
+          <h4>Decisions</h4>
+          <p><strong>${activeDecisions}</strong> active${pendingDecisions > 0 ? ', <mark>' + pendingDecisions + ' pending review</mark>' : ''}</p>
+          ${sq.decisions.main ? `
+          <details>
+            <summary>View decisions</summary>
+            <div class="md-content">${md(sq.decisions.main)}</div>
+          </details>` : ''}
+        </div>
+      </details>`;
+    }).join('')}
+  `;
+}
+
+/**
  * Generate the full HTML page.
  */
 export function generateHtml(data, options = {}) {
   const liveMode = options.liveMode || false;
+  const hasSubSquads = data.subSquads && data.subSquads.length > 0;
   const tabs = [
     { id: 'dashboard', label: '📊 Dashboard', content: genDashboard(data) },
     { id: 'decisions', label: '📋 Decisions', content: genDecisions(data) },
     { id: 'agents', label: '🤖 Agents', content: genAgents(data) },
     { id: 'conversations', label: '💬 Conversations', content: genConversations(data) },
     { id: 'orchestration', label: '⚙️ Orchestration', content: genOrchestration(data) },
-    { id: 'search', label: '🔍 Search', content: genSearch() },
   ];
+
+  if (hasSubSquads) {
+    tabs.push({ id: 'sub-squads', label: '🏢 Sub-Squads', content: genSubSquads(data) });
+  }
+
+  tabs.push({ id: 'search', label: '🔍 Search', content: genSearch() });
 
   return `<!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -384,6 +450,111 @@ function getInlineScript(liveMode) {
     'function escRegex(str) {',
     '  return str.replace(/[\\-\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\]/g, "\\\\$&");',
     '}',
+  ];
+
+  if (liveMode) {
+    lines.push(
+      '',
+      '// Auto-refresh: poll /api/timestamp every 10s',
+      'var __lastTimestamp = null;',
+      'function checkForUpdates() {',
+      '  fetch("/api/timestamp").then(function(r) { return r.json(); }).then(function(data) {',
+      '    if (__lastTimestamp === null) {',
+      '      __lastTimestamp = data.timestamp;',
+      '      return;',
+      '    }',
+      '    if (data.timestamp !== __lastTimestamp) {',
+      '      var toast = document.getElementById("live-toast");',
+      '      if (toast) { toast.classList.add("show"); }',
+      '      setTimeout(function() { location.reload(); }, 800);',
+      '    }',
+      '  }).catch(function() { /* server unreachable, skip */ });',
+      '}',
+      'setInterval(checkForUpdates, 10000);',
+      'checkForUpdates();',
+    );
+  }
+
+  lines.push('</script>');
+  return lines.join('\n    ');
+}
+
+/**
+ * Generate the hub landing page for multi-squad mode.
+ * Shows a grid of squad cards with name, description, agent count, decision count.
+ */
+export function generateHubHtml(config, squadsData, options = {}) {
+  const liveMode = options.liveMode || false;
+
+  const cards = config.squads.map(function(sq) {
+    const data = squadsData[sq.id];
+    const agentCount = data ? data.agents.length : 0;
+    const decisionCount = data ? (data.decisions.main.match(/^### D-/gm) || []).length : 0;
+    const subSquadCount = data && data.subSquads ? data.subSquads.length : 0;
+    const linkBase = liveMode ? '/squads/' + sq.id : './squads/' + sq.id + '/index.html';
+
+    return [
+      '<article class="squad-card" onclick="window.location.href=\'' + linkBase + '\'">',
+      '  <header>' + esc(sq.name) + '</header>',
+      sq.description ? '  <p>' + esc(sq.description) + '</p>' : '',
+      '  <p><strong>' + agentCount + '</strong> agents · <strong>' + decisionCount + '</strong> decisions' + (subSquadCount > 0 ? ' · <strong>' + subSquadCount + '</strong> sub-squads' : '') + '</p>',
+      '</article>'
+    ].filter(Boolean).join('\n        ');
+  });
+
+  return [
+    '<!DOCTYPE html>',
+    '<html lang="en" data-theme="dark">',
+    '<head>',
+    '  <meta charset="utf-8">',
+    '  <meta name="viewport" content="width=device-width, initial-scale=1">',
+    '  <title>Squad Monitor — Hub</title>',
+    '  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">',
+    '  <style>',
+    '    :root { --pico-font-size: 15px; }',
+    '    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }',
+    '    .grid article { margin: 0; }',
+    '    .squad-card { cursor: pointer; transition: border-color 0.2s; }',
+    '    .squad-card:hover { border-color: var(--pico-primary); }',
+    '    .build-info { font-size: 0.75rem; color: var(--pico-muted-color); text-align: center; padding: 1rem; }',
+    liveMode ? '    .live-badge { display: inline-block; background: #c62828; color: #fff; font-size: 0.7rem; padding: 0.15em 0.5em; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle; animation: pulse 2s infinite; }' : '',
+    liveMode ? '    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }' : '',
+    liveMode ? '    .refresh-btn { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0.2rem 0.5rem; vertical-align: middle; }' : '',
+    liveMode ? '    .refresh-btn:hover { opacity: 0.7; }' : '',
+    liveMode ? '    .toast { position: fixed; top: 1rem; right: 1rem; background: var(--pico-primary); color: #fff; padding: 0.5rem 1rem; border-radius: 6px; z-index: 9999; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }' : '',
+    liveMode ? '    .toast.show { opacity: 1; }' : '',
+    '  </style>',
+    '</head>',
+    '<body>',
+    '  <main class="container">',
+    '    <hgroup>',
+    '      <h1>🏠 Squad Monitor Hub' + (liveMode ? '<span class="live-badge">LIVE</span><button class="refresh-btn" onclick="location.reload()" title="Refresh now">🔄</button>' : '') + '</h1>',
+    '      <p>' + config.squads.length + ' squad' + (config.squads.length !== 1 ? 's' : '') + ' configured</p>',
+    '    </hgroup>',
+    liveMode ? '    <div id="live-toast" class="toast">🔄 Refreshing...</div>' : '',
+    '',
+    '    <div class="grid">',
+    '      ' + cards.join('\n      '),
+    '    </div>',
+    '',
+    '    <div class="build-info">',
+    '      Generated ' + new Date().toISOString() + ' · Squad Monitor Hub v1.0.0',
+    '    </div>',
+    '  </main>',
+    '',
+    getHubInlineScript(liveMode),
+    '</body>',
+    '</html>'
+  ].filter(Boolean).join('\n');
+}
+
+/**
+ * Hub inline script — uses string-array-join pattern to avoid template literal conflicts.
+ */
+function getHubInlineScript(liveMode) {
+  const lines = [
+    '<script>',
+    '// Hub page — minimal interactivity',
   ];
 
   if (liveMode) {
