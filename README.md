@@ -2,7 +2,42 @@
 
 A browser dashboard for visualizing squad activity, decisions, and agent interactions from the Copilot CLI session store and `.squad/` directory. Choose static mode for zero cost or live mode for auto-refresh.
 
+## Portable Usage (npx)
+
+Run Squad Monitor as a portable CLI from any directory — no need to clone this repo or install dependencies locally.
+
+```bash
+# Build a static dashboard from your squad project
+npx squad-monitor build
+
+# Start a live development server
+npx squad-monitor dev
+
+# Show available options
+npx squad-monitor --help
+```
+
+**Common options:**
+- `--squad-root <path>` — Path to squad project root (default: current directory)
+- `--db <path>` — Path to session store database (default: `~/.copilot/session-store.db`)
+- `--port <port>` — Dev server port (default: 3000)
+
+**Requirements:**
+- Node.js 18+ (automatically downloaded by npx)
+- A `.squad/` directory in your project
+
+**Example:**
+```bash
+npx squad-monitor build --squad-root ~/my-project --db ~/.copilot/session-store.db
+```
+
+This generates `dist/index.html` in your current directory — a complete, self-contained dashboard ready to share or archive.
+
 ## Getting Started
+
+**Quick start:** Use `npx squad-monitor` to run from any directory (see Portable Usage above).
+
+**Local development:** Clone this repo and run locally.
 
 ### Install and Build
 
