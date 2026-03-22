@@ -34,8 +34,83 @@
   3. Dream Report template & monthly schedule with Scribe
   4. Model monitoring script design (Traya + Nihilus)
 
-### D-002: Reflect skill created — structured learning capture for the squad
+### D-003: Reflect skill created — structured learning capture for the squad
 - **By:** Plagueis
-- **Date:** 2025-07-25
+- **Date:** 2026-03-22
 - **Context:** Requested by Jonathan Warnken. Inspired by Tamir Dresher's blog on squad evolution and Richard Murillo's original design. The squad needed a way to persist corrections across sessions so agents stop repeating mistakes.
 - **Decision:** Created `.squad/skills/reflect/SKILL.md` with three-tier classification (HIGH/MEDIUM/LOW), routing to decisions inbox (team-wide) or agent history (agent-specific), and Reskill ceremony integration. Also created `.squad/decisions/inbox/` directory for the routing pipeline. Confidence starts at LOW — first observation of this pattern in practice.
+
+### D-004: Eval Baseline Framework Established Post-Reskill
+- **By:** Nihilus (Evals / Quality Baseline)
+- **Date:** 2026-03-22
+- **Context:** First RESKILL REVIEW ceremony. Squad recast + Ventress added + 4 new processes (Reflect, Reskill, Dream Reports, Self-Review). Zero existing eval baselines. Cannot measure progress without measurement infrastructure.
+- **Decision:** 
+  - **Priority 1 (THIS WEEK):** Establish baselines for Plagueis (charter quality), Ventress (signal-to-noise), Vader/Maul (code quality), Scribe (Dream Report effectiveness)
+  - **Priority 2 (BY END Q2):** Sidious (decision velocity), Traya (model monitoring), Tyranus (docs accuracy), Revan (release process)
+  - **Priority 3 (ORGANIC):** Reflect effectiveness, Reskill output quality, Self-Review design (Sidious owns)
+  - **Where:** Output: `.squad/log/2026-03-22-reskill-eval-baselines.md` (detailed framework) + `docs/evals.md` (registry)
+  - **Why urgent:** Squad behavior changed significantly. Without baselines, cannot detect drift or measure if improvements are real.
+- **Trade-offs:** 
+  - Requires manual validation first (~3 sessions of spot-checking). Automated tracking can wait.
+  - Reflects reality: not all agent work is easily quantifiable. Accept qualitative metrics (charter quality, signal-to-noise) alongside quantitative (test coverage, speed).
+- **Next:** Plagueis validates Reflect live behavior (sample 3 sessions). Nihilus snapshots Vader/Maul post-recast baselines. Ventress audits first scans.
+
+### D-SKL-001: Skill Reference Format in Charters
+- **By:** Sidious (recommendation from Reskill Review)
+- **Date:** 2026-03-22
+- **Context:** Reskill audit revealed 21 marketplace skills installed but only 3 agents reference skills in charters. This creates waste: agents reinvent patterns, miss opportunities to use proven tools.
+- **Decision:** Adopt standardized "Skills & Tools" section in every agent charter.
+- **Format:**
+  ```markdown
+  ## Skills & Tools
+  Reference these skills during [domain] work:
+  - `skill-name` — When/why to use it
+  - ⚠️ `experimental-skill` — Low-confidence, use with caution
+  ```
+- **Placement:** Immediately after "How I Work" collaboration section
+- **Success criteria:** All 10 agents have "Skills & Tools" section with ≥3 relevant skills
+- **Next:** Implement in Phase 2 of reskill rollout
+
+### D-SKL-002: Skill Confidence Thresholds
+- **By:** Sidious (recommendation from Reskill Review)
+- **Date:** 2026-03-22
+- **Context:** Reflects skill infrastructure needs clear confidence signaling for adoption and iteration.
+- **Decision:** Reference all confidence levels (high/medium/low) in charters. Mark low-confidence skills with ⚠️ warning symbol.
+- **Rationale:** Low-confidence skills need usage to improve confidence. Hiding them prevents ecosystem growth. Warning symbol manages expectations.
+- **Format:** `high-confidence-skill`, `medium-confidence-skill`, ⚠️ `low-confidence-skill`
+- **Trade-offs:** Adds visual complexity. Benefit: prevents over-reliance on experimental features.
+
+### D-SKL-003: Skill Discovery Protocol
+- **By:** Sidious (recommendation from Reskill Review)
+- **Date:** 2026-03-22
+- **Context:** No onboarding for the skills directory. Agents and humans need guidance.
+- **Decision:** Document skill discovery in `.squad/skills/README.md`.
+- **Required content:**
+  1. How to browse skills (list `.squad/skills/` directory)
+  2. SKILL.md file format explanation
+  3. Confidence tiers and what they mean
+  4. When to create new skills vs. use existing
+  5. How to reference skills in charters
+  6. Skill maintenance ownership (Plagueis reviews quality, domain agents maintain content)
+- **Next:** Create in Phase 1 of reskill rollout
+
+### D-SKL-004: Multi-Account Auth Consolidation
+- **By:** Sidious (recommendation from Reskill Review)
+- **Date:** 2026-03-22
+- **Context:** Three skills overlap in multi-account auth space. Agents need clear routing.
+- **Decision:** Declare `github-multi-account` as primary pattern. Use `gh-auth-isolation` for advanced edge cases only.
+- **Routing:**
+  - **Primary:** `github-multi-account` — All standard multi-account scenarios
+  - **Advanced:** `gh-auth-isolation` — Only when multiple processes fight over global auth state
+  - **Config reference:** `agency-optimal-config` — Initial auth setup only
+
+### D-SKL-005: Project Conventions Ownership
+- **By:** Sidious (recommendation from Reskill Review)
+- **Date:** 2026-03-22
+- **Context:** `project-conventions` skill exists (medium confidence) with placeholder content. No owner assigned.
+- **Decision:** Assign maintenance to Sidious (Architect) with quarterly review during Reskill ceremonies.
+- **Responsibilities:**
+  1. Replace template with actual Squad-Monitor conventions
+  2. Review quarterly during Reskill
+  3. Update when decisions affect conventions
+- **Trade-off:** Could assign to Tyranus (docs), but conventions are architectural decisions. Sidious is better fit.
