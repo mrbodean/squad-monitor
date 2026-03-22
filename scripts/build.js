@@ -46,7 +46,7 @@ async function build() {
 
   // Generate HTML
   console.log(`🎨 Generating HTML...`);
-  const html = generateHtml({ ...squadData, sessions });
+  const html = generateHtml({ ...squadData, sessions }, { liveMode: false });
 
   // Write output
   mkdirSync(outDir, { recursive: true });

@@ -239,7 +239,8 @@ function genSearch() {
 /**
  * Generate the full HTML page.
  */
-export function generateHtml(data) {
+export function generateHtml(data, options = {}) {
+  const liveMode = options.liveMode || false;
   const tabs = [
     { id: 'dashboard', label: '📊 Dashboard', content: genDashboard(data) },
     { id: 'decisions', label: '📋 Decisions', content: genDecisions(data) },
@@ -279,15 +280,21 @@ export function generateHtml(data) {
     mark { padding: 0.1em 0.3em; border-radius: 3px; }
     .search-hit { border-left: 3px solid var(--pico-primary); padding-left: 1rem; margin: 1rem 0; }
     .search-hit mark { background: var(--pico-primary-focus); }
-    .build-info { font-size: 0.75rem; color: var(--pico-muted-color); text-align: center; padding: 1rem; }
+    .build-info { font-size: 0.75rem; color: var(--pico-muted-color); text-align: center; padding: 1rem; }${liveMode ? `
+    .live-badge { display: inline-block; background: #c62828; color: #fff; font-size: 0.7rem; padding: 0.15em 0.5em; border-radius: 4px; margin-left: 0.5rem; vertical-align: middle; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    .refresh-btn { background: none; border: none; cursor: pointer; font-size: 1.2rem; padding: 0.2rem 0.5rem; vertical-align: middle; }
+    .refresh-btn:hover { opacity: 0.7; }
+    .toast { position: fixed; top: 1rem; right: 1rem; background: var(--pico-primary); color: #fff; padding: 0.5rem 1rem; border-radius: 6px; z-index: 9999; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }` : ''}
   </style>
 </head>
 <body>
   <main class="container">
     <hgroup>
-      <h1>${esc(data.team.name)}</h1>
+      <h1>${esc(data.team.name)}${liveMode ? '<span class="live-badge">LIVE</span><button class="refresh-btn" onclick="location.reload()" title="Refresh now">🔄</button>' : ''}</h1>
       <p>Squad Monitor — Thoughts, Conversations, and Decisions</p>
-    </hgroup>
+    </hgroup>${liveMode ? '\n    <div id="live-toast" class="toast">🔄 Refreshing...</div>' : ''}
 
     <nav>
       <ul>
@@ -305,12 +312,12 @@ export function generateHtml(data) {
     </div>
   </main>
 
-  ${getInlineScript()}
+  ${getInlineScript(liveMode)}
 </body>
 </html>`;
 }
 
-function getInlineScript() {
+function getInlineScript(liveMode) {
   const lines = [
     '<script>',
     '// Tab switching',
@@ -377,7 +384,31 @@ function getInlineScript() {
     'function escRegex(str) {',
     '  return str.replace(/[\\-\\.\\*\\+\\?\\^\\$\\{\\}\\(\\)\\|\\[\\]\\\\]/g, "\\\\$&");',
     '}',
-    '</script>',
   ];
+
+  if (liveMode) {
+    lines.push(
+      '',
+      '// Auto-refresh: poll /api/timestamp every 10s',
+      'var __lastTimestamp = null;',
+      'function checkForUpdates() {',
+      '  fetch("/api/timestamp").then(function(r) { return r.json(); }).then(function(data) {',
+      '    if (__lastTimestamp === null) {',
+      '      __lastTimestamp = data.timestamp;',
+      '      return;',
+      '    }',
+      '    if (data.timestamp !== __lastTimestamp) {',
+      '      var toast = document.getElementById("live-toast");',
+      '      if (toast) { toast.classList.add("show"); }',
+      '      setTimeout(function() { location.reload(); }, 800);',
+      '    }',
+      '  }).catch(function() { /* server unreachable, skip */ });',
+      '}',
+      'setInterval(checkForUpdates, 10000);',
+      'checkForUpdates();',
+    );
+  }
+
+  lines.push('</script>');
   return lines.join('\n    ');
 }
