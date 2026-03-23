@@ -4,6 +4,38 @@ A browser dashboard for visualizing squad activity, decisions, and agent interac
 
 > 🤖 **Built by AI.** This project was conceived, designed, and coded entirely by an AI development team using [Squad](https://github.com/bradygaster/squad) — a multi-agent coordination framework for GitHub Copilot. Community contributions, feedback, and ideas are welcome — feel free to open an issue or submit a PR.
 
+## Screenshots
+
+### 📊 Dashboard
+Overview stats — agent count, decisions, sessions, skills, and recent activity feed.
+
+![Dashboard](docs/screenshots/dashboard.png)
+
+### 🤖 Agents
+Clickable agent cards showing each team member's role. Click to expand charter and history.
+
+![Agents](docs/screenshots/agents.png)
+
+### 📋 Decisions
+Full decision ledger rendered from `decisions.md`, with pending inbox items.
+
+![Decisions](docs/screenshots/decisions.png)
+
+### 💬 Conversations
+Session list from the Copilot CLI session store — expandable turns and checkpoints.
+
+![Conversations](docs/screenshots/conversations.png)
+
+### ⚙️ Orchestration
+Timeline of orchestration logs and session logs.
+
+![Orchestration](docs/screenshots/orchestration.png)
+
+### 🔍 Search
+Client-side full-text search across all rendered content.
+
+![Search](docs/screenshots/search.png)
+
 ## Portable Usage (npx)
 
 Run Squad Monitor as a portable CLI from any directory — no need to clone this repo or install dependencies locally.
