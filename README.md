@@ -16,6 +16,11 @@ Clickable agent cards showing each team member's role. Click to expand charter a
 
 ![Agents](docs/screenshots/agents.png)
 
+### 🤖 Agent Detail
+Expanded view of an individual agent — full charter and learning history.
+
+![Agent Detail](docs/screenshots/agent-detail.png)
+
 ### 📋 Decisions
 Full decision ledger rendered from `decisions.md`, with pending inbox items.
 
